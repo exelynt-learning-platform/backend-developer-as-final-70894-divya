@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import com.divya.reservation.entity.Reservation;
@@ -24,18 +25,35 @@ public class ReservationController {
         this.service = service;
     }
 
+    private String getCurrentUsername() {
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication.getName() == null
+                || authentication.getName().isBlank()) {
+
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        return authentication.getName();
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<Reservation> create(
             @Valid @RequestBody Reservation reservation,
-            @RequestParam Long resourceId,
-            Authentication authentication) {
+            @RequestParam Long resourceId) {
+
+        String username = getCurrentUsername();
 
         return ResponseEntity.ok(
                 service.create(
-                    reservation,
-                    authentication.getName(),
-                    resourceId
+                        reservation,
+                        username,
+                        resourceId
                 )
         );
     }
@@ -43,19 +61,17 @@ public class ReservationController {
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Reservation>> getAll() {
-
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/my")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Reservation>> getMyReservations(
-            Authentication authentication) {
+    public ResponseEntity<List<Reservation>> getMyReservations() {
+
+        String username = getCurrentUsername();
 
         return ResponseEntity.ok(
-                service.getMyReservations(
-                    authentication.getName()
-                )
+                service.getMyReservations(username)
         );
     }
 
@@ -109,7 +125,7 @@ public class ReservationController {
 
         return ResponseEntity.ok(
                 service.getReservations(
-                    page, size, sortBy, direction
+                        page, size, sortBy, direction
                 )
         );
     }
@@ -152,7 +168,8 @@ public class ReservationController {
 
         return ResponseEntity.ok(
                 service.getByPriceRange(
-                    minPrice, maxPrice
+                        minPrice,
+                        maxPrice
                 )
         );
     }
