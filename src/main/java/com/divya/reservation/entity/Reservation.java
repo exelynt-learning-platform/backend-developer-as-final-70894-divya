@@ -1,5 +1,13 @@
 package com.divya.reservation.entity;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,22 +30,37 @@ public class Reservation {
     private String status;
 
     @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Price cannot be negative")
+    @DecimalMin(
+        value = "0.0",
+        inclusive = true,
+        message = "Price cannot be negative"
+    )
     private BigDecimal price;
 
     @NotNull(message = "Reservation date is required")
     private LocalDateTime reservationDate;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     public Reservation() {
     }
 
-    public Reservation(Long id, String customerName, String status,
-                       BigDecimal price, LocalDateTime reservationDate) {
+    public Reservation(
+            Long id,
+            String customerName,
+            String status,
+            BigDecimal price,
+            LocalDateTime reservationDate,
+            User user) {
+
         this.id = id;
         this.customerName = customerName;
         this.status = status;
         this.price = price;
         this.reservationDate = reservationDate;
+        this.user = user;
     }
 
     public Long getId() {
@@ -78,5 +101,13 @@ public class Reservation {
 
     public void setReservationDate(LocalDateTime reservationDate) {
         this.reservationDate = reservationDate;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

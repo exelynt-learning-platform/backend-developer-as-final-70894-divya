@@ -1,15 +1,28 @@
 package com.divya.reservation.repository;
 
-import com.divya.reservation.entity.Reservation;
-
 import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ReservationRepository extends JpaRepository<Reservation, Long> {
+import com.divya.reservation.entity.Reservation;
+import com.divya.reservation.entity.User;
 
-    List<Reservation> findByCustomerNameContainingIgnoreCase(String name);
+public interface ReservationRepository
+        extends JpaRepository<Reservation, Long> {
 
-    List<Reservation> findByPrice(BigDecimal price);
+    List<Reservation> findByUser(User user);
+
+    List<Reservation> findByStatus(String status);
+
+    List<Reservation> findByPriceGreaterThanEqual(BigDecimal price);
+
+    List<Reservation> findByPriceLessThanEqual(BigDecimal price);
+
+    List<Reservation> findByPriceBetween(
+            BigDecimal minPrice,
+            BigDecimal maxPrice);
+
+    List<Reservation> findByCustomerNameContainingIgnoreCase(
+            String name);
 }

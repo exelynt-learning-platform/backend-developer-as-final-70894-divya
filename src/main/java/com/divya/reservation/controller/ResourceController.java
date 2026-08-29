@@ -3,7 +3,10 @@ package com.divya.reservation.controller;
 import com.divya.reservation.entity.Resource;
 import com.divya.reservation.service.ResourceService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,36 +21,47 @@ public class ResourceController {
         this.service = service;
     }
 
-    // CREATE
+    // ADMIN - CREATE
     @PostMapping
-    public Resource create(@RequestBody Resource resource) {
-        return service.create(resource);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Resource> create(
+            @Valid @RequestBody Resource resource) {
+
+        return ResponseEntity.ok(service.create(resource));
     }
 
-    // GET ALL
+    // ADMIN + USER - READ ALL
     @GetMapping
-    public List<Resource> getAll() {
-        return service.getAll();
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<Resource>> getAll() {
+
+        return ResponseEntity.ok(service.getAll());
     }
 
-    // GET BY ID
+    // ADMIN + USER - READ BY ID
     @GetMapping("/{id}")
-    public Resource getById(@PathVariable Long id) {
-        return service.getById(id);
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<Resource> getById(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(service.getById(id));
     }
 
-    // UPDATE
+    // ADMIN - UPDATE
     @PutMapping("/{id}")
-    public Resource update(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Resource> update(
             @PathVariable Long id,
-            @RequestBody Resource resource) {
+            @Valid @RequestBody Resource resource) {
 
-        return service.update(id, resource);
+        return ResponseEntity.ok(service.update(id, resource));
     }
 
-    // DELETE
+    // ADMIN - DELETE
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id) {
 
         service.delete(id);
 

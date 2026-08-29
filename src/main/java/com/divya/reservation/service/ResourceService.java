@@ -1,11 +1,11 @@
 package com.divya.reservation.service;
 
-import com.divya.reservation.entity.Resource;
-import com.divya.reservation.repository.ResourceRepository;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.divya.reservation.entity.Resource;
+import com.divya.reservation.repository.ResourceRepository;
 
 @Service
 public class ResourceService {
@@ -29,7 +29,9 @@ public class ResourceService {
     // GET BY ID
     public Resource getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Resource not found"));
+                .orElseThrow(
+                    () -> new RuntimeException("Resource not found")
+                );
     }
 
     // UPDATE
@@ -45,6 +47,11 @@ public class ResourceService {
 
     // DELETE
     public void delete(Long id) {
+
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Resource not found");
+        }
+
         repository.deleteById(id);
     }
 }

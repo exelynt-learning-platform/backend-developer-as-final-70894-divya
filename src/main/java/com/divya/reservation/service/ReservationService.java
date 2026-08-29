@@ -10,31 +10,59 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.divya.reservation.entity.Reservation;
+import com.divya.reservation.entity.User;
 import com.divya.reservation.repository.ReservationRepository;
+import com.divya.reservation.repository.UserRepository;
 
 @Service
 public class ReservationService {
 
     private final ReservationRepository repository;
+    private final UserRepository userRepository;
 
-    public ReservationService(ReservationRepository repository) {
+    public ReservationService(
+            ReservationRepository repository,
+            UserRepository userRepository) {
         this.repository = repository;
+        this.userRepository = userRepository;
     }
 
-    // CREATE
-    public Reservation create(Reservation reservation) {
+    // CREATE - USER taken from JWT username
+    public Reservation create(Reservation reservation, String username) {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        reservation.setUser(user);
+
+        if (reservation.getStatus() == null ||
+                reservation.getStatus().isBlank()) {
+            reservation.setStatus("PENDING");
+        }
+
         return repository.save(reservation);
     }
 
-    // GET ALL
+    // ADMIN - GET ALL
     public List<Reservation> getAll() {
         return repository.findAll();
+    }
+
+    // USER - OWN RESERVATIONS
+    public List<Reservation> getMyReservations(String username) {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return repository.findByUser(user);
     }
 
     // GET BY ID
     public Reservation getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+                .orElseThrow(
+                    () -> new RuntimeException("Reservation not found")
+                );
     }
 
     // UPDATE
@@ -45,17 +73,25 @@ public class ReservationService {
         existing.setCustomerName(reservation.getCustomerName());
         existing.setReservationDate(reservation.getReservationDate());
         existing.setPrice(reservation.getPrice());
-        existing.setStatus(reservation.getStatus());
+
+        if (reservation.getStatus() != null) {
+            existing.setStatus(reservation.getStatus());
+        }
 
         return repository.save(existing);
     }
 
     // DELETE
     public void delete(Long id) {
+
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Reservation not found");
+        }
+
         repository.deleteById(id);
     }
 
-    // SEARCH BY CUSTOMER NAME
+    // SEARCH
     public List<Reservation> searchByCustomerName(String name) {
         return repository.findByCustomerNameContainingIgnoreCase(name);
     }
@@ -67,21 +103,35 @@ public class ReservationService {
             String sortBy,
             String direction) {
 
-        Sort sort;
-
-        if (direction.equalsIgnoreCase("desc")) {
-            sort = Sort.by(sortBy).descending();
-        } else {
-            sort = Sort.by(sortBy).ascending();
-        }
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
         return repository.findAll(pageable);
     }
 
-    // FILTER BY PRICE
-    public List<Reservation> getByPrice(BigDecimal price) {
-        return repository.findByPrice(price);
+    // FILTER BY STATUS
+    public List<Reservation> getByStatus(String status) {
+        return repository.findByStatus(status);
+    }
+
+    // FILTER BY MIN PRICE
+    public List<Reservation> getByMinPrice(BigDecimal price) {
+        return repository.findByPriceGreaterThanEqual(price);
+    }
+
+    // FILTER BY MAX PRICE
+    public List<Reservation> getByMaxPrice(BigDecimal price) {
+        return repository.findByPriceLessThanEqual(price);
+    }
+
+    // FILTER BY MIN + MAX PRICE
+    public List<Reservation> getByPriceRange(
+            BigDecimal minPrice,
+            BigDecimal maxPrice) {
+
+        return repository.findByPriceBetween(minPrice, maxPrice);
     }
 }
