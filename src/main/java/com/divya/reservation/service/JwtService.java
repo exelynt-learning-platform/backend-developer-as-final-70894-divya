@@ -5,6 +5,7 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.divya.reservation.entity.User;
@@ -16,14 +17,19 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
 
-    private static final String SECRET =
-            "DivyaReservationProjectSecretKeyForJWT2026VerySecureKey123456";
+    private final SecretKey key;
+    private final long expiration;
 
-    private final SecretKey key =
-            Keys.hmacShaKeyFor(
-                    SECRET.getBytes(StandardCharsets.UTF_8));
+    public JwtService(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration}") long expiration) {
 
-    private final long expiration = 60 * 60 * 1000;
+        this.key = Keys.hmacShaKeyFor(
+                secret.getBytes(StandardCharsets.UTF_8)
+        );
+
+        this.expiration = expiration;
+    }
 
     public String generateToken(User user) {
 
@@ -39,10 +45,12 @@ public class JwtService {
     }
 
     public String extractUsername(String token) {
+
         return getClaims(token).getSubject();
     }
 
     public String extractRole(String token) {
+
         return getClaims(token)
                 .get("role", String.class);
     }

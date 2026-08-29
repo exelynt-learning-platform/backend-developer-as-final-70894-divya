@@ -1,5 +1,8 @@
 package com.divya.reservation.entity;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -11,9 +14,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reservations")
@@ -44,6 +44,10 @@ public class Reservation {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resource_id", nullable = false)
+    private Resource resource;
+
     public Reservation() {
     }
 
@@ -53,7 +57,8 @@ public class Reservation {
             String status,
             BigDecimal price,
             LocalDateTime reservationDate,
-            User user) {
+            User user,
+            Resource resource) {
 
         this.id = id;
         this.customerName = customerName;
@@ -61,6 +66,7 @@ public class Reservation {
         this.price = price;
         this.reservationDate = reservationDate;
         this.user = user;
+        this.resource = resource;
     }
 
     public Long getId() {
@@ -109,5 +115,13 @@ public class Reservation {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Resource getResource() {
+        return resource;
+    }
+
+    public void setResource(Resource resource) {
+        this.resource = resource;
     }
 }

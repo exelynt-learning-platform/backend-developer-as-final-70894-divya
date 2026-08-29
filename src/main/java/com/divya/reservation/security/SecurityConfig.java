@@ -17,7 +17,9 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter) {
+
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
@@ -27,11 +29,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http) throws Exception {
 
         http
-            // JWT is stateless, so CSRF is not required
             .csrf(csrf -> csrf.disable())
 
             .sessionManagement(session ->
@@ -42,26 +43,22 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                // Authentication
                 .requestMatchers(
-                    "/auth/**",
-                    "/api/auth/**"
+                    "/api/auth/login",
+                    "/api/auth/register"
                 ).permitAll()
 
-                // Swagger
                 .requestMatchers(
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/v3/api-docs/**"
                 ).permitAll()
 
-                // Resources - USER + ADMIN can READ
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/resources/**"
                 ).hasAnyRole("USER", "ADMIN")
 
-                // Resources - ADMIN only
                 .requestMatchers(
                     HttpMethod.POST,
                     "/api/resources/**"
@@ -77,11 +74,9 @@ public class SecurityConfig {
                     "/api/resources/**"
                 ).hasRole("ADMIN")
 
-                // Everything else requires authentication
                 .anyRequest().authenticated()
             )
 
-            // JWT filter
             .addFilterBefore(
                 jwtAuthenticationFilter,
                 UsernamePasswordAuthenticationFilter.class

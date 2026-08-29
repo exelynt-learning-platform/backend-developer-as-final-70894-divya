@@ -24,37 +24,41 @@ public class ReservationController {
         this.service = service;
     }
 
-    // USER + ADMIN - CREATE
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<Reservation> create(
             @Valid @RequestBody Reservation reservation,
+            @RequestParam Long resourceId,
             Authentication authentication) {
 
         return ResponseEntity.ok(
-                service.create(reservation, authentication.getName())
+                service.create(
+                    reservation,
+                    authentication.getName(),
+                    resourceId
+                )
         );
     }
 
-    // ADMIN - GET ALL
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Reservation>> getAll() {
+
         return ResponseEntity.ok(service.getAll());
     }
 
-    // USER - OWN RESERVATIONS
     @GetMapping("/my")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Reservation>> getMyReservations(
             Authentication authentication) {
 
         return ResponseEntity.ok(
-                service.getMyReservations(authentication.getName())
+                service.getMyReservations(
+                    authentication.getName()
+                )
         );
     }
 
-    // ADMIN - GET BY ID
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Reservation> getById(
@@ -63,29 +67,28 @@ public class ReservationController {
         return ResponseEntity.ok(service.getById(id));
     }
 
-    // ADMIN - UPDATE
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Reservation> update(
             @PathVariable Long id,
-            @Valid @RequestBody Reservation reservation) {
+            @Valid @RequestBody Reservation reservation,
+            @RequestParam(required = false) Long resourceId) {
 
         return ResponseEntity.ok(
-                service.update(id, reservation)
+                service.update(id, reservation, resourceId)
         );
     }
 
-    // ADMIN - DELETE
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(
             @PathVariable Long id) {
 
         service.delete(id);
+
         return ResponseEntity.noContent().build();
     }
 
-    // ADMIN - SEARCH
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Reservation>> search(
@@ -96,7 +99,6 @@ public class ReservationController {
         );
     }
 
-    // ADMIN - PAGINATION + SORTING
     @GetMapping("/page")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<Reservation>> getReservations(
@@ -107,15 +109,11 @@ public class ReservationController {
 
         return ResponseEntity.ok(
                 service.getReservations(
-                        page,
-                        size,
-                        sortBy,
-                        direction
+                    page, size, sortBy, direction
                 )
         );
     }
 
-    // ADMIN - FILTER STATUS
     @GetMapping("/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Reservation>> getByStatus(
@@ -126,7 +124,6 @@ public class ReservationController {
         );
     }
 
-    // ADMIN - MIN PRICE
     @GetMapping("/min-price")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Reservation>> getByMinPrice(
@@ -137,7 +134,6 @@ public class ReservationController {
         );
     }
 
-    // ADMIN - MAX PRICE
     @GetMapping("/max-price")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Reservation>> getByMaxPrice(
@@ -148,7 +144,6 @@ public class ReservationController {
         );
     }
 
-    // ADMIN - PRICE RANGE
     @GetMapping("/price-range")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Reservation>> getByPriceRange(
@@ -156,7 +151,9 @@ public class ReservationController {
             @RequestParam BigDecimal maxPrice) {
 
         return ResponseEntity.ok(
-                service.getByPriceRange(minPrice, maxPrice)
+                service.getByPriceRange(
+                    minPrice, maxPrice
+                )
         );
     }
 }
