@@ -17,14 +17,20 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
 
-    private final SecretKey key;
+    private final SecretKey secretKey;
     private final long expiration;
 
     public JwtService(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration}") long expiration) {
+            @Value("${jwt.expiration:3600000}") long expiration) {
 
-        this.key = Keys.hmacShaKeyFor(
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalArgumentException(
+                    "JWT_SECRET must be at least 32 characters"
+            );
+        }
+
+        this.secretKey = Keys.hmacShaKeyFor(
                 secret.getBytes(StandardCharsets.UTF_8)
         );
 
@@ -38,37 +44,39 @@ public class JwtService {
                 .claim("role", user.getRole())
                 .issuedAt(new Date())
                 .expiration(
-                    new Date(System.currentTimeMillis() + expiration)
+                        new Date(System.currentTimeMillis() + expiration)
                 )
-                .signWith(key)
+                .signWith(secretKey)
                 .compact();
     }
 
     public String extractUsername(String token) {
 
-        return getClaims(token).getSubject();
+        return extractAllClaims(token).getSubject();
     }
 
     public String extractRole(String token) {
 
-        return getClaims(token)
-                .get("role", String.class);
+        return extractAllClaims(token).get("role", String.class);
     }
 
     public boolean isTokenValid(String token) {
 
         try {
-            getClaims(token);
-            return true;
+            Claims claims = extractAllClaims(token);
+
+            return claims.getSubject() != null
+                    && claims.getExpiration().after(new Date());
+
         } catch (Exception e) {
             return false;
         }
     }
 
-    private Claims getClaims(String token) {
+    private Claims extractAllClaims(String token) {
 
         return Jwts.parser()
-                .verifyWith(key)
+                .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

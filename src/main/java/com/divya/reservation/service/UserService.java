@@ -12,28 +12,40 @@ public class UserService {
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository repository,
-                       PasswordEncoder passwordEncoder) {
+    public UserService(
+            UserRepository repository,
+            PasswordEncoder passwordEncoder) {
+
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
     }
 
-    // REGISTER USER
     public User register(User user) {
+
+        if (repository.existsByUsername(user.getUsername())) {
+            throw new IllegalArgumentException(
+                    "Username already exists"
+            );
+        }
 
         user.setPassword(
                 passwordEncoder.encode(user.getPassword())
         );
 
+        if (user.getRole() == null || user.getRole().isBlank()) {
+            user.setRole("USER");
+        }
+
         return repository.save(user);
     }
 
-    // FIND USER BY USERNAME
     public User findByUsername(String username) {
 
         return repository.findByUsername(username)
-                .orElseThrow(
-                        () -> new RuntimeException("User not found")
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Invalid username or password"
+                        )
                 );
     }
 }
